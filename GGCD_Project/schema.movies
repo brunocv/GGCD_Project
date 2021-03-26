@@ -1,0 +1,10 @@
+message Movies {
+    required binary tconst (STRING);
+    required binary title (STRING);
+    required binary year (STRING);
+    required binary rating (STRING);
+    required binary votes (STRING);
+    required group genres (LIST) {
+        repeated binary str (UTF8);
+    }
+}
