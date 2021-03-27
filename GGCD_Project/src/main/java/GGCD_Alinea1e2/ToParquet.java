@@ -35,7 +35,7 @@ public class ToParquet {
         return new AvroSchemaConverter().convert(mt);
     }
 
-    //Mapper que trata do ficheiro title.basics.tsv.bz2
+    //Mapper que trata do ficheiro title.basics.tsv.gz
     public static class ToParquetMapperLeft extends Mapper<LongWritable, Text, Text,Text> {
 
         @Override
@@ -45,18 +45,36 @@ public class ToParquet {
 
             String[] fields = value.toString().split("\t");
 
-            //se não for filme não guardamos
-            if(!fields[1].equals("movie")) return;
-
-            //primeira sub-string: title || segunda sub-string: year || terceira sub-string: genres
             StringBuilder values = new StringBuilder();
+
+            //guardar tipo
+            values.append(fields[1]);
+            values.append("\t");
+
+            //guardar primary title
+            values.append(fields[2]);
+            values.append("\t");
 
             //guardar titulo original
             values.append(fields[3]);
             values.append("\t");
 
-            //guardar ano, se for \N fica a "null"
+            //guardar se e para adulto ou nao
+            values.append(fields[4]);
+            values.append("\t");
+
+            //guardar ano inicial, se for \N fica a "null"
             if(!fields[5].equals("\\N")) values.append(fields[5]);
+            else values.append("null");
+            values.append("\t");
+
+            //guardar ano final, se for \N fica a "null"
+            if(!fields[6].equals("\\N")) values.append(fields[6]);
+            else values.append("null");
+            values.append("\t");
+
+            //guardar minutos, se for \N fica a "null"
+            if(!fields[7].equals("\\N")) values.append(fields[7]);
             else values.append("null");
             values.append("\t");
 
@@ -76,7 +94,7 @@ public class ToParquet {
         }
     }
 
-    //Mapper que trata do ficheiro title.ratings.tsv.bz2
+    //Mapper que trata do ficheiro title.ratings.tsv.gz
     public static class ToParquetMapperRight extends Mapper<LongWritable, Text, Text,Text> {
 
         @Override
@@ -131,10 +149,15 @@ public class ToParquet {
                 //se nao tiver R no inicio entao estamos perante o value de basics
                 if(!aux[0].equals("R")){
                     basics = aux;
-                    record.put("title",basics[0]);
-                    record.put("year",basics[1]);
+                    record.put("type",basics[0]);
+                    record.put("primaryTitle",basics[1]);
+                    record.put("originalTitle",basics[2]);
+                    record.put("isAdult",basics[3]);
+                    record.put("startYear",basics[4]);
+                    record.put("endYear",basics[5]);
+                    record.put("time",basics[6]);
 
-                    String[] aux_gen = basics[2].split(",");
+                    String[] aux_gen = basics[7].split(",");
                     for(String s : aux_gen) genres.add(s);
                     record.put("genres",genres);
 
@@ -187,7 +210,6 @@ public class ToParquet {
         job1.setOutputFormatClass(AvroParquetOutputFormat.class);
         AvroParquetOutputFormat.setSchema(job1, getSchema());
         FileOutputFormat.setOutputPath(job1,new Path("resultado_parquet"));
-
 
         job1.setMapOutputKeyClass(Text.class);
         job1.setMapOutputValueClass(Text.class);

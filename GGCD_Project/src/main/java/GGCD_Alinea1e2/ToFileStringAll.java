@@ -26,10 +26,10 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ToFileString {
+public class ToFileStringAll {
 
     //Mapper que trata do ficheiro title.basics.tsv.gz
-    public static class ToFileMapperLeft extends Mapper<LongWritable, Text, Text,Text> {
+    public static class ToFileAllMapperLeft extends Mapper<LongWritable, Text, Text,Text> {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -38,18 +38,37 @@ public class ToFileString {
 
             String[] fields = value.toString().split("\t");
 
-            //se não for filme não guardamos
-            if(!fields[1].equals("movie")) return;
-
-            //primeira sub-string: title || segunda sub-string: year || terceira sub-string: genres
+            //guardar numa string toda a informacao (tratar de nulos)
             StringBuilder values = new StringBuilder();
+
+            //guardar tipo
+            values.append(fields[1]);
+            values.append("\t");
+
+            //guardar primary title
+            values.append(fields[2]);
+            values.append("\t");
 
             //guardar titulo original
             values.append(fields[3]);
             values.append("\t");
 
-            //guardar ano, se for \N fica a "null"
+            //guardar se e para adulto ou nao
+            values.append(fields[4]);
+            values.append("\t");
+
+            //guardar ano inicial, se for \N fica a "null"
             if(!fields[5].equals("\\N")) values.append(fields[5]);
+            else values.append("null");
+            values.append("\t");
+
+            //guardar ano final, se for \N fica a "null"
+            if(!fields[6].equals("\\N")) values.append(fields[6]);
+            else values.append("null");
+            values.append("\t");
+
+            //guardar minutos, se for \N fica a "null"
+            if(!fields[7].equals("\\N")) values.append(fields[7]);
             else values.append("null");
             values.append("\t");
 
@@ -70,7 +89,7 @@ public class ToFileString {
     }
 
     //Mapper que trata do ficheiro title.ratings.tsv.gz
-    public static class ToFileMapperRight extends Mapper<LongWritable, Text, Text,Text> {
+    public static class ToFileAllMapperRight extends Mapper<LongWritable, Text, Text,Text> {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -83,7 +102,7 @@ public class ToFileString {
             StringBuilder values = new StringBuilder();
 
             //meter um R no inicio para depois no reducer saber se esta e a String (Text) de ratings ou nao, sendo que
-            //queremos que esta String venha depois da String (Text) resultante do ToFileMapperLeft
+            //queremos que esta String venha depois da String (Text) resultante do ToFileAllMapperLeft
             values.append("R");
             values.append("\t");
             values.append(fields[1]);
@@ -142,23 +161,23 @@ public class ToFileString {
 
         long startTime = System.nanoTime();
 
-        Job job1 = Job.getInstance(new Configuration(), "ToFileString");
-        job1.setJarByClass(ToFileString.class);
+        Job job1 = Job.getInstance(new Configuration(), "ToFileStringAll");
+        job1.setJarByClass(ToFileStringAll.class);
 
         //input
         job1.setInputFormatClass(TextInputFormat.class);
         MultipleInputs.addInputPath(job1,new Path("/home/bruno/Desktop/GGCD/Dados/original/title.basics.tsv.gz"),
-                TextInputFormat.class, ToFileMapperLeft.class);
+                TextInputFormat.class, ToFileAllMapperLeft.class);
 
         MultipleInputs.addInputPath(job1,new Path("/home/bruno/Desktop/GGCD/Dados/original/title.ratings.tsv.gz"),
-                TextInputFormat.class, ToFileMapperRight.class);
+                TextInputFormat.class, ToFileAllMapperRight.class);
 
         job1.setReducerClass(JoinReducer.class);
 
         //output
         //Para guardar em ficheiro (texto)
         job1.setOutputFormatClass(TextOutputFormat.class);
-        TextOutputFormat.setOutputPath(job1,new Path("resultado_text"));
+        TextOutputFormat.setOutputPath(job1,new Path("resultado_text_all"));
         job1.setOutputKeyClass(Text.class);
         job1.setOutputValueClass(Text.class);
 

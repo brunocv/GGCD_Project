@@ -1,10 +1,15 @@
 message Movies {
     required binary tconst (STRING);
-    required binary title (STRING);
-    required binary year (STRING);
+    required binary type (STRING);
+    required binary primaryTitle (STRING);
+    required binary originalTitle (STRING);
+    required binary isAdult (STRING);
+    required binary startYear (STRING);
+    required binary endYear (STRING);
+    required binary time (STRING);
     required binary rating (STRING);
     required binary votes (STRING);
     required group genres (LIST) {
-        repeated binary str (UTF8);
+            repeated binary str (UTF8);
     }
 }
