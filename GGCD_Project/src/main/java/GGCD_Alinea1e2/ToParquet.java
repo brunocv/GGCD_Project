@@ -48,20 +48,29 @@ public class ToParquet {
             //se não for filme não guardamos
             if(!fields[1].equals("movie")) return;
 
-
-            //indice 0: title || indice 1: year || indice 2: genres
+            //primeira sub-string: title || segunda sub-string: year || terceira sub-string: genres
             StringBuilder values = new StringBuilder();
 
-            values.append(fields[3] + "##");
+            //guardar titulo original
+            values.append(fields[3]);
+            values.append("\t");
 
+            //guardar ano, se for \N fica a "null"
+            if(!fields[5].equals("\\N")) values.append(fields[5]);
+            else values.append("null");
+            values.append("\t");
 
-            if(!fields[5].equals("\\N")) values.append(fields[5] + "##");
-            else values.append("null##");
+            //guardar genres, se nao tiver fica a null
+            int i = 0;
 
             for(String s : fields[8].split(",")){
-                if(!s.equals("\\N"))values.append(s + "##");
-                else values.append("null##");
+                if(i!=0) values.append(",");
+                if(!s.equals("\\N"))values.append(s);
+                else values.append("null");
+                i++;
             }
+
+            values.append("\t");
 
             context.write(new Text(fields[0]), new Text(values.toString()));
         }
@@ -77,43 +86,20 @@ public class ToParquet {
 
             String[] fields = value.toString().split("\t");
 
-
-            //indice 0: rating || indice 1: votes
+            //primeira sub-string: rating || segunda sub-string: votes
             StringBuilder values = new StringBuilder();
 
-            values.append("," + fields[1] + "##");
-            values.append(fields[2] + "##");
+            //meter um R no inicio para depois no reducer saber se esta e a String (Text) de ratings ou nao, sendo que
+            //queremos que esta String venha depois da String (Text) resultante do ToParquetMapperLeft
+            values.append("R");
+            values.append("\t");
+            values.append(fields[1]);
+            values.append("\t");
+            values.append(fields[2]);
 
             context.write(new Text(fields[0]), new Text(values.toString()));
         }
     }
-
-
-    //Juntar a informacao dos 2 Mappers para um ficheiro (funciona)
-    //public static class JoinReducer2 extends Reducer<Text,Text, Text, Text>
-    /*
-    public static class JoinReducer2 extends Reducer<Text,Text, Text, Text> {
-
-        @Override
-        protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-
-            int i = 0;
-
-            //criadas 2 strings para manter a ordem do esquema que queremos
-            String aux = "";
-            String aux2 = "";
-
-            for(Text value : values){
-                if(value.toString().charAt(0) == ',' ) aux += value.toString();
-                else aux2 += value.toString();
-                i++;
-            }
-
-            if(i <= 1) return;
-            context.write(key,new Text(aux2 + aux));
-        }
-    }
-    */
 
     public static class JoinReducer extends Reducer<Text,Text, Void, GenericRecord> {
 
@@ -127,77 +113,89 @@ public class ToParquet {
         @Override
         protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 
-            int i = 0;
-
-            //criadas 2 strings para manter a ordem do esquema que queremos
-            String aux = "";
-            String aux2 = "";
-
-            for(Text value : values){
-                if(value.toString().charAt(0) == ',' ) aux2 += value.toString();
-                else aux += value.toString();
-                i++;
-            }
-            if(i <= 1) return;
+            boolean has_basics = false;
+            boolean has_ratings = false;
 
             GenericRecord record = new GenericData.Record(schema);
+
+            //criadas 2 strings para manter a ordem que queremos
+            String[] basics;
+            String[] ratings;
+
             record.put("tconst",key);
-            String[] values1 = aux.toString().split("##");
-            String[] values2 = aux2.toString().split("##");
+            List<String> genres = new ArrayList<>();
 
-            record.put("title", values1[0]);
-            record.put("year", values1[1]);
-            record.put("rating", values2[0]);
-            record.put("votes", values2[1]);
+            for(Text value : values){
+                String[] aux = value.toString().split("\t");
 
-            List<String> l = new ArrayList<>();
+                //se nao tiver R no inicio entao estamos perante o value de basics
+                if(!aux[0].equals("R")){
+                    basics = aux;
+                    record.put("title",basics[0]);
+                    record.put("year",basics[1]);
 
-            for(int j = 2; j < values1.length ; j++){
-                l.add(values1[j]);
+                    String[] aux_gen = basics[2].split(",");
+                    for(String s : aux_gen) genres.add(s);
+                    record.put("genres",genres);
+
+                    has_basics = true;
+                }
+                else if(aux[0].equals("R")){
+                    ratings = aux;
+                    record.put("rating", ratings[0]);
+                    record.put("votes", ratings[1]);
+
+                    has_ratings = true;
+                }
             }
-            record.put("genres", l);
-            context.write(null,record);
+
+            //se tiver as duas entradas entao guardo, se so tiver basics crio ratings a nulo (porque se tem ja sei que e movie)
+            //se so tiver ratings nao posso criar porque nao sei se era movie
+            if(has_basics && has_ratings){
+                context.write(null,record);
+            }
+            else if(has_basics && has_ratings == false){
+                record.put("rating", "null");
+                record.put("votes", "null");
+
+                context.write(null,record);
+            }
+            else if(has_ratings && has_basics == false) return;
         }
     }
 
     public static void main(String[] args) throws Exception{
 
-        //1st file: title.basics.tsv.bz2
-        //2nd file: title.ratings.tsv.bz2
+        long startTime = System.nanoTime();
 
         Job job1 = Job.getInstance(new Configuration(), "ToParquetAlinea1");
         job1.setJarByClass(ToParquet.class);
 
         //input
         job1.setInputFormatClass(TextInputFormat.class);
-        MultipleInputs.addInputPath(job1,new Path("/home/bruno/Desktop/GGCD/Dados/teste/title.basics.tsv.bz2"),
+        MultipleInputs.addInputPath(job1,new Path("/home/bruno/Desktop/GGCD/Dados/original/title.basics.tsv.gz"),
                 TextInputFormat.class, ToParquetMapperLeft.class);
 
-        MultipleInputs.addInputPath(job1,new Path("/home/bruno/Desktop/GGCD/Dados/teste/title.ratings.tsv.bz2"),
+        MultipleInputs.addInputPath(job1,new Path("/home/bruno/Desktop/GGCD/Dados/original/title.ratings.tsv.gz"),
                 TextInputFormat.class, ToParquetMapperRight.class);
 
         job1.setReducerClass(JoinReducer.class);
 
         //output
-
-        /*
-        //Para guardar em ficheiro (texto) usar este em vez do de baixo e mudar o reducer para o JoinReducer2
-        job1.setOutputFormatClass(TextOutputFormat.class);
-        TextOutputFormat.setOutputPath(job1,new Path("resultado"));
-        job1.setOutputKeyClass(Text.class);
-        job1.setOutputValueClass(Text.class);
-        */
-
         job1.setOutputKeyClass(Void.class);
         job1.setOutputValueClass(GenericRecord.class);
         job1.setOutputFormatClass(AvroParquetOutputFormat.class);
         AvroParquetOutputFormat.setSchema(job1, getSchema());
-        FileOutputFormat.setOutputPath(job1,new Path("resultado"));
+        FileOutputFormat.setOutputPath(job1,new Path("resultado_parquet"));
 
 
         job1.setMapOutputKeyClass(Text.class);
         job1.setMapOutputValueClass(Text.class);
 
         job1.waitForCompletion(true);
+
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime)/1000000; //miliseconds
+        System.out.println("\n\nTIME: " + duration +"\n");
     }
 }

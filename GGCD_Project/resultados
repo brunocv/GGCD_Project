@@ -1,0 +1,15 @@
+title.basics.tsv (wc -l) linhas = 7650596
+title.ratings.tsv (wc -l) linhas = 1125660
+
+title.basics.tsv = movies -> linhas =
+
+
+Programa:
+	sem estar comprimido -> resultado = 569221 linhas
+	gz -> resultado = 569221 linhas
+	bz2 -> resultado = 569221 linhas  
+
+Tempos:
+	sem estar comprimido -> 14250 ms
+    gz -> 15228 ms
+    bz2 -> 31006 ms
