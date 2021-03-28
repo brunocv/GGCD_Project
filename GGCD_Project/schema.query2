@@ -1,0 +1,6 @@
+message Query2 {
+    required binary tconst (STRING);
+    required binary type (STRING);
+    required binary startYear (STRING);
+    required binary votes (STRING);
+}

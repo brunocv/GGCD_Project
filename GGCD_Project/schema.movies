@@ -10,6 +10,6 @@ message Movies {
     required binary rating (STRING);
     required binary votes (STRING);
     required group genres (LIST) {
-            repeated binary str (UTF8);
+            repeated binary str (STRING);
     }
 }

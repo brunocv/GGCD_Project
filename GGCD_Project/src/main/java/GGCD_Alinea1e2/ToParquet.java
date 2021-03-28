@@ -28,6 +28,7 @@ import java.util.List;
 
 public class ToParquet {
 
+    //Para saber o Schema a ser usado
     public static Schema getSchema() throws IOException {
         InputStream is = new FileInputStream("schema.movies");
         String ps = new String(is.readAllBytes());
@@ -119,6 +120,7 @@ public class ToParquet {
         }
     }
 
+    //Cria GenericRecords com a juncao da informacao dos dois mappers
     public static class JoinReducer extends Reducer<Text,Text, Void, GenericRecord> {
 
         private Schema schema;
@@ -165,8 +167,8 @@ public class ToParquet {
                 }
                 else if(aux[0].equals("R")){
                     ratings = aux;
-                    record.put("rating", ratings[0]);
-                    record.put("votes", ratings[1]);
+                    record.put("rating", ratings[1]);
+                    record.put("votes", ratings[2]);
 
                     has_ratings = true;
                 }
@@ -187,6 +189,7 @@ public class ToParquet {
         }
     }
 
+    //Main
     public static void main(String[] args) throws Exception{
 
         long startTime = System.nanoTime();

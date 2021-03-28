@@ -1,0 +1,4 @@
+message Query1 {
+    required binary type (STRING);
+    required binary startYear (STRING);
+}
