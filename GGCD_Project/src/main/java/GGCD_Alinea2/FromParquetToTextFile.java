@@ -95,8 +95,8 @@ public class FromParquetToTextFile {
         }
     }
 
-    //Mapper para resolver a query 3, a cada entrada retorna key = ano e value = tconst + rating
-    public static class FromParquetQuery3Mapper extends Mapper<Void, GenericRecord, CompositeKeyWritableText, NullWritable> {
+    //Mapper para resolver a query 3, a cada entrada retorna key = CompositeKeyWritable (esta tem secondary sort) e value = NullWritable
+    public static class FromParquetQuery3Mapper extends Mapper<Void, GenericRecord, CompositeKeyWritable, NullWritable> {
 
         @Override
         protected void map(Void key, GenericRecord value, Context context) throws IOException, InterruptedException {
@@ -104,27 +104,30 @@ public class FromParquetToTextFile {
             if(!value.get("type").equals("movie")) return;
 
             String tconst = value.get("tconst").toString();
+            String originalTitle = value.get("originalTitle").toString();
+            String startYear = value.get("startYear").toString();
+            String rating = value.get("rating").toString();
+            String votes = value.get("votes").toString();
 
-            //Como guardamos todas as entradas de basics no parquet e se não estiver no ratings metemos os ratings a null,
-            //temos de dizer que se tiver rating a null passa a -1
-            //cada context tera: ano -> (key) + (tconst + rating) -> value
 
-            if(!value.get("rating").equals("null")){
-                CompositeKeyWritableText newKey = new CompositeKeyWritableText(value.get("startYear").toString(),tconst,value.get("rating").toString());
+            if(!rating.equals("null") && !votes.equals("null")){
+                CompositeKeyWritable newKey = new CompositeKeyWritable(startYear,tconst,originalTitle,rating,votes);
                 context.write(newKey, NullWritable.get());
             }
-            else{
-                CompositeKeyWritableText newKey = new CompositeKeyWritableText(value.get("startYear").toString(),tconst,"-1.0");
+            else if(!rating.equals("null") && votes.equals("null")){
+                CompositeKeyWritable newKey = new CompositeKeyWritable(startYear,tconst,originalTitle,rating,"-1");
                 context.write(newKey, NullWritable.get());
             }
+            else if(rating.equals("null")) return;
+
         }
     }
 
-    //Reducer para resolver a query 3, junta todos as keys iguais e ve qual dos filmes desse ano tem mais votos
-    public static class FromParqueQuery3Reducer extends Reducer<CompositeKeyWritableText,NullWritable, CompositeKeyWritableText,NullWritable> {
+    //Reducer para resolver a query 3, junta todas as keys com o mesmo ano e fica com o top 10 de rating (quando entra no reduce ja vem ordenado)
+    public static class FromParqueQuery3Reducer extends Reducer<CompositeKeyWritable,NullWritable, CompositeKeyWritable,NullWritable> {
 
         @Override
-        protected void reduce(CompositeKeyWritableText key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
+        protected void reduce(CompositeKeyWritable key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
 
             int i = 0;
             for (NullWritable value : values) {
@@ -204,13 +207,12 @@ public class FromParquetToTextFile {
         job_query3.setJarByClass(FromParquetToTextFile.class);
 
         job_query3.setMapperClass(FromParquetQuery3Mapper.class);
-        job_query3.setMapOutputKeyClass(CompositeKeyWritableText.class);
+        job_query3.setMapOutputKeyClass(CompositeKeyWritable.class);
         job_query3.setMapOutputValueClass(NullWritable.class);
-        job_query3.setPartitionerClass(PartitionerText.class);
-        job_query3.setSortComparatorClass(KeySortComparatorText.class);
-        job_query3.setGroupingComparatorClass(GroupingComparatorText.class);
+        job_query3.setPartitionerClass(PartitionerYear.class); //dividir de forma correta por reducers
+        job_query3.setGroupingComparatorClass(GroupingComparator.class); //agrupar por anos
         job_query3.setReducerClass(FromParqueQuery3Reducer.class);
-        job_query3.setOutputKeyClass(CompositeKeyWritableText.class);
+        job_query3.setOutputKeyClass(CompositeKeyWritable.class);
         job_query3.setOutputValueClass(NullWritable.class);
         //job_query3.setNumReduceTasks(8);
 
