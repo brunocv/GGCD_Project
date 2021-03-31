@@ -1,4 +1,4 @@
-package GGCD_Alinea2;
+package GGCD_Alinea2_Text;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -146,7 +146,7 @@ public class FromParquetToTextFile {
 
         long startTime = System.nanoTime();
 
-        Job job_query1 = Job.getInstance(new Configuration(),"FromParquetToTextFileQuery1");
+        Job job_query1 = Job.getInstance(new Configuration(),"FromParquetToTextFileQuery1Text");
 
         job_query1.setJarByClass(FromParquetToTextFile.class);
         job_query1.setMapperClass(FromParquetQuery1Mapper.class);
@@ -162,7 +162,7 @@ public class FromParquetToTextFile {
         AvroParquetInputFormat.setRequestedProjection(job_query1, schema1);
 
         job_query1.setOutputFormatClass(TextOutputFormat.class);
-        TextOutputFormat.setOutputPath(job_query1,new Path("resultado_from_parquet_query1"));
+        TextOutputFormat.setOutputPath(job_query1,new Path("resultado_from_parquet_query1_text"));
 
         job_query1.waitForCompletion(true);
 
@@ -174,7 +174,7 @@ public class FromParquetToTextFile {
 
         startTime = System.nanoTime();
 
-        Job job_query2 = Job.getInstance(new Configuration(),"FromParquetToTextFileQuery2");
+        Job job_query2 = Job.getInstance(new Configuration(),"FromParquetToTextFileQuery2Text");
 
         job_query2.setJarByClass(FromParquetToTextFile.class);
         job_query2.setMapperClass(FromParquetQuery2Mapper.class);
@@ -190,7 +190,7 @@ public class FromParquetToTextFile {
         AvroParquetInputFormat.setRequestedProjection(job_query2, schema2);
 
         job_query2.setOutputFormatClass(TextOutputFormat.class);
-        TextOutputFormat.setOutputPath(job_query2,new Path("resultado_from_parquet_query2"));
+        TextOutputFormat.setOutputPath(job_query2,new Path("resultado_from_parquet_query2_text"));
 
         job_query2.waitForCompletion(true);
 
@@ -202,7 +202,7 @@ public class FromParquetToTextFile {
 
         startTime = System.nanoTime();
 
-        Job job_query3 = Job.getInstance(new Configuration(),"FromParquetToTextFileQuery3");
+        Job job_query3 = Job.getInstance(new Configuration(),"FromParquetToTextFileQuery3Text");
 
         job_query3.setJarByClass(FromParquetToTextFile.class);
 
@@ -223,7 +223,7 @@ public class FromParquetToTextFile {
         AvroParquetInputFormat.setRequestedProjection(job_query3, schema3);
 
         job_query3.setOutputFormatClass(TextOutputFormat.class);
-        TextOutputFormat.setOutputPath(job_query3,new Path("resultado_from_parquet_query3"));
+        TextOutputFormat.setOutputPath(job_query3,new Path("resultado_from_parquet_query3_text"));
 
         job_query3.waitForCompletion(true);
 

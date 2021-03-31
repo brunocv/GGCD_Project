@@ -1,7 +1,6 @@
-package GGCD_Alinea2;
+package GGCD_Alinea2_Text;
 
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.Partitioner;
 
 //Class que serve para indicar qual o mapper output que vai para cada reducer,
 //de forma a que se tivermos mais que um reducer conseguimos garantir que X reducer ira ter as entradas todas

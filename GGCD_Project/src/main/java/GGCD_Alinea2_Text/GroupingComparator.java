@@ -1,4 +1,4 @@
-package GGCD_Alinea2;
+package GGCD_Alinea2_Text;
 
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableComparator;
