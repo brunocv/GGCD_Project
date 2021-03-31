@@ -39,7 +39,6 @@ public class FromParquetToTextAlinea3 {
         return new AvroSchemaConverter().convert(mt);
     }
 
-
     //Mapper para resolver a alinea 3, a cada entrada retorna key = CompositeKeyWritable (esta tem secondary sort) e value = NullWritable
     public static class FromParquetAlinea3Mapper extends Mapper<Void, GenericRecord, CompositeKeyWritable, NullWritable> {
 
@@ -137,7 +136,7 @@ public class FromParquetToTextAlinea3 {
                     toReturn.append("\t");
                     toReturn.append(generos.get(genre + "0"));
 
-                    context.write(new Text("teste"),new Text(toReturn.toString()));
+                    context.write(new Text(tconst),new Text(toReturn.toString()));
                 }
                 else {
                     if (generos.containsKey(genre + "1")) {
@@ -157,7 +156,7 @@ public class FromParquetToTextAlinea3 {
                             toReturn.append("RECOMMENDED:");
                             toReturn.append("\t");
                             toReturn.append(generos.get(genre + "1"));
-                            context.write(new Text("teste"),new Text(toReturn.toString()));
+                            context.write(new Text(tconst),new Text(toReturn.toString()));
                         }
                     }
                 }
@@ -188,6 +187,7 @@ public class FromParquetToTextAlinea3 {
                         auxLine = line.split("\t");
                         if(j==2) j = 0;
                         generos.put(auxLine[0]+j,auxLine[1] + "\t" + auxLine[2] + "\t" +auxLine[3] + "\t" + auxLine[4]);
+                        j++;
                         i++;
 
                     }
@@ -197,6 +197,18 @@ public class FromParquetToTextAlinea3 {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+        }
+    }
+
+    //Reducer que so serve para escrever no ficheiro sem este ser dividido 
+    public static class FromParquetAlinea3FinalReducer extends Reducer<Text,Text, NullWritable,Text> {
+
+        @Override
+        protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+
+            for(Text t : values){
+                context.write(NullWritable.get(),t);
             }
         }
     }
@@ -215,7 +227,7 @@ public class FromParquetToTextAlinea3 {
         job_1.setMapperClass(FromParquetAlinea3Mapper.class);
         job_1.setMapOutputKeyClass(CompositeKeyWritable.class);
         job_1.setMapOutputValueClass(NullWritable.class);
-        //job_1.setPartitionerClass(PartitionerGenre.class); //dividir de forma correta por reducers (nao devemos precisar porque so usamos 1 reducer)
+        //job_1.setPartitionerClass(PartitionerGenre.class); //dividir de forma correta por reducers (nao devemos precisar porque so usamsos 1 reducer)
         job_1.setGroupingComparatorClass(GroupingComparator.class); //agrupar por generos
         job_1.setReducerClass(FromParquetAlinea3Reducer.class);
         job_1.setOutputKeyClass(CompositeKeyWritable.class);
@@ -232,22 +244,13 @@ public class FromParquetToTextAlinea3 {
 
         job_1.waitForCompletion(true);
 
-        long endTime = System.nanoTime();
-        long duration = (endTime - startTime)/1000000; //miliseconds
-        System.out.println("\n\nTIME: " + duration +"\n");
-
         // ########################## ALINEA 3 FASE 2 #######################################
-
-        startTime = System.nanoTime();
 
         Job job_2 = Job.getInstance(new Configuration(),"FromParquetToTextFileAlinea3Fase2");
 
         job_2.setJarByClass(FromParquetToTextAlinea3.class);
         job_2.setMapperClass(FromParquetFinalMapper.class);
-        job_2.setNumReduceTasks(0);
-
-        job_2.setOutputKeyClass(Text.class);
-        job_2.setOutputValueClass(Text.class);
+        job_2.setReducerClass(FromParquetAlinea3FinalReducer.class);
 
         job_2.addCacheFile(URI.create("resultado_from_parquet_alinea3_fase1/part-r-00000"));
 
@@ -258,10 +261,14 @@ public class FromParquetToTextAlinea3 {
         job_2.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(job_2,new Path("resultado_from_parquet_alinea3_fase2"));
 
+        job_2.setMapOutputKeyClass(Text.class);
+        job_2.setMapOutputValueClass(Text.class);
+        job_2.setOutputKeyClass(NullWritable.class);
+        job_2.setOutputValueClass(Text.class);
         job_2.waitForCompletion(true);
 
-        endTime = System.nanoTime();
-        duration = (endTime - startTime)/1000000; //miliseconds
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime)/1000000; //miliseconds
         System.out.println("\n\nTIME: " + duration +"\n");
     }
 }

@@ -40,7 +40,8 @@ public class FromParquetToTextFile {
 
             if(!value.get("type").equals("movie")) return;
 
-            context.write(new Text(value.get("startYear").toString()),new LongWritable(1));
+            if(value.get("startYear").toString().equals("null")) context.write(new Text(value.get("endYear").toString()),new LongWritable(1));
+            else context.write(new Text(value.get("startYear").toString()),new LongWritable(1));
 
         }
     }
@@ -70,8 +71,8 @@ public class FromParquetToTextFile {
             //temos de dizer que se tiver votos a null passa a -1
             //cada context tera: ano -> (key) + (tconst + votes) -> value
             if(!value.get("votes").equals("null"))
-                context.write(new Text(value.get("startYear").toString()),new Text(tconst +"\t" + value.get("votes").toString()));
-            else context.write(new Text(value.get("startYear").toString()),new Text(tconst +"\t" + "-1"));
+                context.write(new Text(value.get("startYear").toString()),new Text(tconst +"\t" + value.get("originalTitle").toString() + "\t" + value.get("votes").toString()));
+            else context.write(new Text(value.get("startYear").toString()),new Text(tconst +"\t" + value.get("originalTitle").toString() + "\t" + "-1"));
 
         }
     }
@@ -83,15 +84,17 @@ public class FromParquetToTextFile {
 
             long maior = -1;
             String tconst = "";
+            String title = "";
 
             for(Text value : values){
                 String[] fields = value.toString().split("\t");
-                if(Integer.parseInt(fields[1]) >= maior){
+                if(Integer.parseInt(fields[2]) >= maior){
                     tconst = fields[0];
-                    maior = Integer.parseInt(fields[1]);
+                    title = fields[1];
+                    maior = Integer.parseInt(fields[2]);
                 }
             }
-            context.write(key,new Text(tconst + "\t" + maior));
+            context.write(key,new Text(tconst + "\t" + title + "\t" + maior));
         }
     }
 
@@ -166,13 +169,7 @@ public class FromParquetToTextFile {
 
         job_query1.waitForCompletion(true);
 
-        long endTime = System.nanoTime();
-        long duration = (endTime - startTime)/1000000; //miliseconds
-        System.out.println("\n\nTIME: " + duration +"\n");
-
         // ########################## QUERY 2 #######################################
-
-        startTime = System.nanoTime();
 
         Job job_query2 = Job.getInstance(new Configuration(),"FromParquetToTextFileQuery2Text");
 
@@ -194,13 +191,8 @@ public class FromParquetToTextFile {
 
         job_query2.waitForCompletion(true);
 
-        endTime = System.nanoTime();
-        duration = (endTime - startTime)/1000000; //miliseconds
-        System.out.println("\n\nTIME: " + duration +"\n");
 
         // ########################## QUERY 3 #######################################
-
-        startTime = System.nanoTime();
 
         Job job_query3 = Job.getInstance(new Configuration(),"FromParquetToTextFileQuery3Text");
 
@@ -227,8 +219,10 @@ public class FromParquetToTextFile {
 
         job_query3.waitForCompletion(true);
 
-        endTime = System.nanoTime();
-        duration = (endTime - startTime)/1000000; //miliseconds
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime)/1000000; //miliseconds
         System.out.println("\n\nTIME: " + duration +"\n");
+
+
     }
 }
