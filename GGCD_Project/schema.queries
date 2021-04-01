@@ -1,0 +1,9 @@
+message Queries {
+    required binary tconst (STRING);
+    required binary type (STRING);
+    required binary originalTitle (STRING);
+    required binary startYear (STRING);
+    required binary rating (STRING);
+    required binary votes (STRING);
+
+}

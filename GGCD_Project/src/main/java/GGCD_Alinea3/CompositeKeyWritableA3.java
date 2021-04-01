@@ -9,7 +9,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 //Class que representara cada chave para o reducer saber ordenar pela forma que estiver indicada no metodo compareTo
-public class CompositeKeyWritable implements Writable, WritableComparable<CompositeKeyWritable> {
+public class CompositeKeyWritableA3 implements Writable, WritableComparable<CompositeKeyWritableA3> {
 
     private String tconst;
     private String originalTitle;
@@ -18,10 +18,10 @@ public class CompositeKeyWritable implements Writable, WritableComparable<Compos
     private String genero;
 
     //Construtor vazio
-    public CompositeKeyWritable() {}
+    public CompositeKeyWritableA3() {}
 
     //Construtor por atribuicao
-    public CompositeKeyWritable(String tconst, String originalTitle, String rating, String votes, String genero) {
+    public CompositeKeyWritableA3(String tconst, String originalTitle, String rating, String votes, String genero) {
 
         this.tconst = tconst;
         this.originalTitle = originalTitle;
@@ -68,7 +68,7 @@ public class CompositeKeyWritable implements Writable, WritableComparable<Compos
 
     //funcao essencial para a ordenacao das chaves, e esta funcao que faz com que o
     //Secondary Sort seja bem feito
-    public int compareTo(CompositeKeyWritable objKeyPair) {
+    public int compareTo(CompositeKeyWritableA3 objKeyPair) {
 
         int result = genero.compareTo(objKeyPair.getGenero());
         if ( result == 0) {

@@ -2,18 +2,14 @@ package GGCD_Alinea3;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.commons.compress.compressors.CompressorException;
-import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.parquet.avro.AvroParquetInputFormat;
 import org.apache.parquet.avro.AvroSchemaConverter;
@@ -40,7 +36,7 @@ public class FromParquetToTextAlinea3 {
     }
 
     //Mapper para resolver a alinea 3, a cada entrada retorna key = CompositeKeyWritable (esta tem secondary sort) e value = NullWritable
-    public static class FromParquetAlinea3Mapper extends Mapper<Void, GenericRecord, CompositeKeyWritable, NullWritable> {
+    public static class FromParquetAlinea3Mapper extends Mapper<Void, GenericRecord, CompositeKeyWritableA3, NullWritable> {
 
         @Override
         protected void map(Void key, GenericRecord value, Context context) throws IOException, InterruptedException {
@@ -65,11 +61,11 @@ public class FromParquetToTextAlinea3 {
 
 
             if(!rating.equals("null") && !votes.equals("null")){
-                CompositeKeyWritable newKey = new CompositeKeyWritable(tconst,originalTitle,rating,votes,genre);
+                CompositeKeyWritableA3 newKey = new CompositeKeyWritableA3(tconst,originalTitle,rating,votes,genre);
                 context.write(newKey, NullWritable.get());
             }
             else if(!rating.equals("null") && votes.equals("null")){
-                CompositeKeyWritable newKey = new CompositeKeyWritable(tconst,originalTitle,rating,"-1",genre);
+                CompositeKeyWritableA3 newKey = new CompositeKeyWritableA3(tconst,originalTitle,rating,"-1",genre);
                 context.write(newKey, NullWritable.get());
             }
             else if(rating.equals("null")) return;
@@ -78,10 +74,10 @@ public class FromParquetToTextAlinea3 {
     }
 
     //Reducer para resolver a alinea 3, junta todas as keys com o mesmo genero e fica com o top 2 de rating para cada genero (quando entra no reduce ja vem ordenado)
-    public static class FromParquetAlinea3Reducer extends Reducer<CompositeKeyWritable,NullWritable, CompositeKeyWritable,NullWritable> {
+    public static class FromParquetAlinea3Reducer extends Reducer<CompositeKeyWritableA3,NullWritable, CompositeKeyWritableA3,NullWritable> {
 
         @Override
-        protected void reduce(CompositeKeyWritable key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
+        protected void reduce(CompositeKeyWritableA3 key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
 
             int i = 0;
             for (NullWritable value : values) {
@@ -201,7 +197,7 @@ public class FromParquetToTextAlinea3 {
         }
     }
 
-    //Reducer que so serve para escrever no ficheiro sem este ser dividido 
+    //Reducer que so serve para escrever no ficheiro sem este ser dividido
     public static class FromParquetAlinea3FinalReducer extends Reducer<Text,Text, NullWritable,Text> {
 
         @Override
@@ -225,12 +221,12 @@ public class FromParquetToTextAlinea3 {
         job_1.setJarByClass(FromParquetToTextAlinea3.class);
 
         job_1.setMapperClass(FromParquetAlinea3Mapper.class);
-        job_1.setMapOutputKeyClass(CompositeKeyWritable.class);
+        job_1.setMapOutputKeyClass(CompositeKeyWritableA3.class);
         job_1.setMapOutputValueClass(NullWritable.class);
         //job_1.setPartitionerClass(PartitionerGenre.class); //dividir de forma correta por reducers (nao devemos precisar porque so usamsos 1 reducer)
-        job_1.setGroupingComparatorClass(GroupingComparator.class); //agrupar por generos
+        job_1.setGroupingComparatorClass(GroupingComparatorGenre.class); //agrupar por generos
         job_1.setReducerClass(FromParquetAlinea3Reducer.class);
-        job_1.setOutputKeyClass(CompositeKeyWritable.class);
+        job_1.setOutputKeyClass(CompositeKeyWritableA3.class);
         job_1.setOutputValueClass(NullWritable.class);
 
         job_1.setInputFormatClass(AvroParquetInputFormat.class);

@@ -47,7 +47,7 @@ public class FromParquetToTextFile {
     }
 
     //Reducer para resolver a query 1, junta todos as keys iguais e faz o somatorios dos values
-    public static class FromParqueQuery1Reducer extends Reducer<Text,LongWritable, Text,LongWritable> {
+    public static class FromParquetQuery1Reducer extends Reducer<Text,LongWritable, Text,LongWritable> {
         @Override
         protected void reduce(Text key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
             long total = 0;
@@ -78,7 +78,7 @@ public class FromParquetToTextFile {
     }
 
     //Reducer para resolver a query 2, junta todos as keys iguais e ve qual dos filmes desse ano tem mais votos
-    public static class FromParqueQuery2Reducer extends Reducer<Text,Text, Text,Text> {
+    public static class FromParquetQuery2Reducer extends Reducer<Text,Text, Text,Text> {
         @Override
         protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 
@@ -127,7 +127,7 @@ public class FromParquetToTextFile {
     }
 
     //Reducer para resolver a query 3, junta todas as keys com o mesmo ano e fica com o top 10 de rating (quando entra no reduce ja vem ordenado)
-    public static class FromParqueQuery3Reducer extends Reducer<CompositeKeyWritable,NullWritable, CompositeKeyWritable,NullWritable> {
+    public static class FromParquetQuery3Reducer extends Reducer<CompositeKeyWritable,NullWritable, CompositeKeyWritable,NullWritable> {
 
         @Override
         protected void reduce(CompositeKeyWritable key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
@@ -153,7 +153,7 @@ public class FromParquetToTextFile {
 
         job_query1.setJarByClass(FromParquetToTextFile.class);
         job_query1.setMapperClass(FromParquetQuery1Mapper.class);
-        job_query1.setReducerClass(FromParqueQuery1Reducer.class);
+        job_query1.setReducerClass(FromParquetQuery1Reducer.class);
 
         job_query1.setOutputKeyClass(Text.class);
         job_query1.setOutputValueClass(LongWritable.class);
@@ -175,7 +175,7 @@ public class FromParquetToTextFile {
 
         job_query2.setJarByClass(FromParquetToTextFile.class);
         job_query2.setMapperClass(FromParquetQuery2Mapper.class);
-        job_query2.setReducerClass(FromParqueQuery2Reducer.class);
+        job_query2.setReducerClass(FromParquetQuery2Reducer.class);
 
         job_query2.setOutputKeyClass(Text.class);
         job_query2.setOutputValueClass(Text.class);
@@ -203,7 +203,7 @@ public class FromParquetToTextFile {
         job_query3.setMapOutputValueClass(NullWritable.class);
         job_query3.setPartitionerClass(PartitionerYear.class); //dividir de forma correta por reducers
         job_query3.setGroupingComparatorClass(GroupingComparator.class); //agrupar por anos
-        job_query3.setReducerClass(FromParqueQuery3Reducer.class);
+        job_query3.setReducerClass(FromParquetQuery3Reducer.class);
         job_query3.setOutputKeyClass(CompositeKeyWritable.class);
         job_query3.setOutputValueClass(NullWritable.class);
         //job_query3.setNumReduceTasks(8);
