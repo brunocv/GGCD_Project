@@ -32,9 +32,7 @@ import org.apache.parquet.schema.MessageTypeParser;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 
 //Class que vai pegar no ficheiro AvroParquet criado pela class AvroParquet e responder as queries
@@ -42,6 +40,8 @@ import java.util.List;
 //Usado para verificacao de resultados
 public class FromParquetToParquetFile{
 
+    public static List<String> top10 = new ArrayList<>();
+    public static List<String> sortedTop10 = new ArrayList<>();
 
     //Recebe o ficheiro do esquema e fica com o Schema
     public static Schema getSchema(String schema) throws IOException {
@@ -60,10 +60,21 @@ public class FromParquetToParquetFile{
             if (!value.get("type").equals("movie")) return;
 
             String tconst = value.get("tconst").toString();
+            String votes = value.get("votes").toString();
+            String rating = value.get("rating").toString();
 
-            if(!value.get("votes").equals("null"))
-                context.write(new Text(value.get("startYear").toString()),new Text(tconst +"\t" + value.get("originalTitle").toString() + "\t" + value.get("votes").toString()));
-            else context.write(new Text(value.get("startYear").toString()),new Text(tconst +"\t" + value.get("originalTitle").toString() + "\t" + "-1"));
+            if(!rating.equals("null") && !votes.equals("null"))
+                context.write(new Text(value.get("startYear").toString()),
+                        new Text(tconst +"\t" + value.get("originalTitle").toString() + "\t" + rating + "\t" +votes));
+            else if(!rating.equals("null") && votes.equals("null"))
+                context.write(new Text(value.get("startYear").toString()),
+                        new Text(tconst +"\t" + value.get("originalTitle").toString() + "\t" + rating + "\t" + "-1"));
+            else if(rating.equals("null") && !votes.equals("null"))
+                context.write(new Text(value.get("startYear").toString()),
+                        new Text(tconst +"\t" + value.get("originalTitle").toString() + "\t" + "-1" + "\t" + votes));
+            else if(rating.equals("null") && votes.equals("null"))
+                context.write(new Text(value.get("startYear").toString()),
+                        new Text(tconst +"\t" + value.get("originalTitle").toString() + "\t" + "-1" + "\t" + "-1"));
 
         }
     }
@@ -79,12 +90,16 @@ public class FromParquetToParquetFile{
             String title = "";
 
             for (Text value : values) {
+
                 total++; //numero de filmes
                 String[] fields = value.toString().split("\t");
-                if (Integer.parseInt(fields[2]) >= maior) {
+                top10.add(key.toString() + "\t" + fields[2] + "\t" + fields[3] + "\t" + fields[0] + "\t" + fields[1]);
+                int x = Integer.parseInt(fields[3]);
+
+                if (x >= maior) {
                     tconst = fields[0]; //filme com mais votos nas chaves que juntou (nao sao todas as entradas do ano, uma vez que o resto das entradas (continuacao)
                     title = fields[1];  //podem ter ido para outro combiner)
-                    maior = Integer.parseInt(fields[2]);
+                    maior = x;
                 }
             }
 
@@ -134,11 +149,30 @@ public class FromParquetToParquetFile{
                 }
             }
 
+            Collections.sort(top10, Collections.reverseOrder());
+
+            List<String> result = new ArrayList<>();
+
+            String ano = key.toString();
+            int count = 0;
+            for(String s : top10){
+                //ano rating votes tconst title
+                if(count == 10) break;
+
+                String[] aux = s.split("\t");
+
+                if(aux[0].equals(ano) && !aux[1].equals("-1")){
+                    result.add(aux[3] + "\t" + aux[4] + "\t" + aux[1] + "\t" + aux[2]);
+                    count++;
+                }
+            }
+
             record.put("year", key.toString());
             record.put("number_of_movies", total_movies);
             record.put("tconst_most_votes", tconst_most_votes);
             record.put("title_most_votes", title_most_votes);
             record.put("number_of_votes", most_votes);
+            record.put("top10",result);
             context.write(null, record);
         }
     }

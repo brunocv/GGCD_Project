@@ -4,10 +4,7 @@ message Alinea2 {
     required binary tconst_most_votes (STRING);
     required binary title_most_votes (STRING);
     required binary number_of_votes (STRING);
-    optional group top10(MAP) {
-        repeated group positions_query3{
-            required binary key (STRING);
-            required binary value (STRING);
-        }
-     }
+    required group top10 (LIST) {
+                repeated binary str (STRING);
+    }
 }

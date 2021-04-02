@@ -49,6 +49,8 @@ public class Verifica {
             String tconst_most_votes = value.get("tconst_most_votes").toString();
             String title_most_votes = value.get("title_most_votes").toString();
             String number_of_votes = value.get("number_of_votes").toString();
+            List<String> top10 = new ArrayList<>();
+            top10 = (List<String>)value.get("top10");
 
             StringBuilder entry = new StringBuilder();
             entry.append(number_of_movies);
@@ -58,7 +60,13 @@ public class Verifica {
             entry.append(title_most_votes);
             entry.append("\t");
             entry.append(number_of_votes);
-            entry.append("\t");
+            entry.append("\t\n");
+            entry.append("Top 10: \n");
+            int pos = 1;
+            for(String s : top10){
+                entry.append(pos + "- " + s + "\n");
+                pos++;
+            }
 
             context.write(new Text(year), new Text(entry.toString()));
 
