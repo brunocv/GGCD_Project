@@ -124,6 +124,25 @@ public class FromParquetToParquetFile{
 
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
+            Collections.sort(top10, new Comparator<String>() {
+                @Override
+                public int compare(String o1, String o2) {
+                    String[] aux = o1.split("\t");
+                    String[] aux2 = o2.split("\t");
+
+                    Double rating = Double.parseDouble(aux[1]);
+                    Double rating2 = Double.parseDouble(aux2[1]);
+
+                    int result = rating.compareTo(rating2);
+                    if(result == 0){
+                        Integer vote = Integer.parseInt(aux[2]);
+                        Integer vote2 = Integer.parseInt(aux2[2]);
+                        result = vote.compareTo(vote2);
+                    }
+                    return -result;
+                }
+            });
+            System.out.println(top10.size());
             schema = getSchema("schema.alinea2");
         }
 
@@ -148,8 +167,6 @@ public class FromParquetToParquetFile{
                     most_votes = field_with_most_votes;
                 }
             }
-
-            Collections.sort(top10, Collections.reverseOrder());
 
             List<String> result = new ArrayList<>();
 
@@ -179,6 +196,9 @@ public class FromParquetToParquetFile{
 
     //Main
     public static void main(String args[]) throws Exception {
+
+        long startTime = System.nanoTime();
+
         Job job = Job.getInstance(new Configuration(),"FromParquetToTextFileAlinea2");
 
         job.setJarByClass(FromParquetToParquetFile.class);
@@ -203,6 +223,10 @@ public class FromParquetToParquetFile{
         FileOutputFormat.setOutputPath(job,new Path("resultado_alinea2"));
 
         job.waitForCompletion(true);
+
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime)/1000000; //miliseconds
+        System.out.println("\n\nTIME: " + duration +"\n");
 
     }
 
