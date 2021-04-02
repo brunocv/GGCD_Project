@@ -41,42 +41,29 @@ public class Verifica {
     //Mapper para resolver a query 1, a cada entrada retorna key = ano e value = 1
     public static class FromParquetQueriesMapper extends Mapper<Void, GenericRecord, Text, Text> {
 
-        private HashMap<String,String> query1 = new HashMap<>();
-        private HashMap<String,String> query2 = new HashMap<>();
-
         @Override
         protected void map(Void key, GenericRecord value, Context context) throws IOException, InterruptedException {
 
-            query1 = (HashMap<String, String>) value.get("query1");
-            query2 = (HashMap<String, String>) value.get("query2");
+            String year = value.get("year").toString();
+            String number_of_movies = value.get("number_of_movies").toString();
+            String tconst_most_votes = value.get("tconst_most_votes").toString();
+            String title_most_votes = value.get("title_most_votes").toString();
+            String number_of_votes = value.get("number_of_votes").toString();
 
-            if(query1!=null){
-                for (Map.Entry<String, String> entry : query1.entrySet()) {
-                    String chave = entry.getKey() ;
-                    context.write(new Text("query1" + "\t"+ chave), new Text(entry.getValue()));
-                }
-            }
+            StringBuilder entry = new StringBuilder();
+            entry.append(number_of_movies);
+            entry.append("\t");
+            entry.append(tconst_most_votes);
+            entry.append("\t");
+            entry.append(title_most_votes);
+            entry.append("\t");
+            entry.append(number_of_votes);
+            entry.append("\t");
 
-            if(query2!=null){
-                for (Map.Entry<String, String> entry : query2.entrySet()){
-                    String chave = entry.getKey() ;
-                    context.write(new Text("query2" + "\t"+ chave), new Text(entry.getValue()));
-                }
-
-            }
-        }
-    }
-
-    public static class FromParquetQueriesReducer extends Reducer<Text, Text, Text, Text> {
-
-        @Override
-        protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-
-            for(Text t : values) context.write(key,t);
+            context.write(new Text(year), new Text(entry.toString()));
 
         }
     }
-
 
     //Main
     public static void main(String args[]) throws Exception{
@@ -87,7 +74,7 @@ public class Verifica {
 
         job.setJarByClass(Verifica.class);
         job.setMapperClass(FromParquetQueriesMapper.class);
-        job.setReducerClass(FromParquetQueriesReducer.class);
+        job.setNumReduceTasks(0);
 
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);

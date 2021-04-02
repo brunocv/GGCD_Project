@@ -1,18 +1,13 @@
 message Alinea2 {
-    optional group query1 (MAP) {
-        repeated group entry_query1{
+    required binary year (STRING);
+    required binary number_of_movies (STRING);
+    required binary tconst_most_votes (STRING);
+    required binary title_most_votes (STRING);
+    required binary number_of_votes (STRING);
+    optional group top10(MAP) {
+        repeated group positions_query3{
             required binary key (STRING);
             required binary value (STRING);
         }
-
-    }
-    optional group query2 (MAP) {
-        repeated group entry_query2{
-            required binary key (STRING);
-            required binary value (STRING);
-        }
-
      }
-
-
 }

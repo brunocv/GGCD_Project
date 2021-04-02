@@ -42,8 +42,6 @@ import java.util.List;
 //Usado para verificacao de resultados
 public class FromParquetToParquetFile{
 
-    public static HashMap<String, String> query1 = new HashMap<>();
-    public static HashMap<String, String> query2 = new HashMap<>();
 
     //Recebe o ficheiro do esquema e fica com o Schema
     public static Schema getSchema(String schema) throws IOException {
@@ -63,59 +61,45 @@ public class FromParquetToParquetFile{
 
             String tconst = value.get("tconst").toString();
 
-            context.write(new Text("query1\t" + value.get("startYear").toString()), new Text("1"));
-
             if(!value.get("votes").equals("null"))
-                context.write(new Text("query2\t" + value.get("startYear").toString()),new Text(tconst +"\t" + value.get("originalTitle").toString() + "\t" + value.get("votes").toString()));
-            else context.write(new Text("query2\t" + value.get("startYear").toString()),new Text(tconst +"\t" + value.get("originalTitle").toString() + "\t" + "-1"));
+                context.write(new Text(value.get("startYear").toString()),new Text(tconst +"\t" + value.get("originalTitle").toString() + "\t" + value.get("votes").toString()));
+            else context.write(new Text(value.get("startYear").toString()),new Text(tconst +"\t" + value.get("originalTitle").toString() + "\t" + "-1"));
 
         }
     }
 
     //Combiner para responder as queries
-    public static class FromParquetQueriesCombiner extends Reducer<Text,Text, Text,Text>{
+    public static class FromParquetQueriesCombiner extends Reducer<Text,Text, Text,Text> {
         @Override
         protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 
-            String[] query = key.toString().split("\t");
+            long total = 0;
+            long maior = -1;
+            String tconst = "";
+            String title = "";
 
-            if(query[0].equals("query1")){
-                long total = 0;
-                for(Text value : values){
-                    total++;
+            for (Text value : values) {
+                total++; //numero de filmes
+                String[] fields = value.toString().split("\t");
+                if (Integer.parseInt(fields[2]) >= maior) {
+                    tconst = fields[0]; //filme com mais votos nas chaves que juntou (nao sao todas as entradas do ano, uma vez que o resto das entradas (continuacao)
+                    title = fields[1];  //podem ter ido para outro combiner)
+                    maior = Integer.parseInt(fields[2]);
                 }
-                if(query1.containsKey(query[1])){
-                    long aux = Long.parseLong(query1.get(query[1]));
-                    total += aux;
-                    query1.put(query[1],String.valueOf(total));
-                }
-                else query1.put(query[1], String.valueOf(total));
-
-                context.write(new Text("done"),new Text(""));
             }
-            else if(query[0].equals("query2")){
-                long maior = -1;
-                String tconst = "";
-                String title = "";
 
-                for(Text value : values){
-                    String[] fields = value.toString().split("\t");
-                    if(Integer.parseInt(fields[2]) >= maior){
-                        tconst = fields[0];
-                        title = fields[1];
-                        maior = Integer.parseInt(fields[2]);
-                    }
-                }
-                if(query2.containsKey(query[1])){
-                    String[] aux = query2.get(query[1]).split("\t");
-                    if(Long.parseLong(aux[2]) < maior){
-                        query2.put(query[1], tconst + "\t" + title + "\t" + maior);
-                    }
-                }
-                else query2.put(query[1], tconst + "\t" + title + "\t" + maior);
-
-                context.write(new Text("done"),new Text(""));
-            }
+            StringBuilder result = new StringBuilder();
+            result.append(total);
+            result.append("\t");
+            result.append(tconst);
+            result.append("\t");
+            result.append(title);
+            result.append("\t");
+            result.append(maior);
+            //preciso mandar para o reducer assim a chave para ele juntar uma vez que o combiner nao junta as chaves todas iguais, so as que
+            //vem para ele e uma vez que do mapper podem vir varios splits cada combiner trata de um split e o reducer e que junta tudo
+            //combiner vai servir para tirar algum trabalho do reducer e assim algumas chaves ja estao juntas
+            context.write(key, new Text(result.toString()));
         }
     }
 
@@ -131,13 +115,30 @@ public class FromParquetToParquetFile{
         @Override
         protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 
+            long total_movies = 0;
+            long most_votes = -1;
+            String tconst_most_votes = "";
+            String title_most_votes = "";
             GenericRecord record = new GenericData.Record(schema);
 
-            if(key.toString().equals("done")){
-                record.put("query1",query1);
-                record.put("query2",query2);
+            for(Text t : values){
+                //fields[0] = total ; fields[1] = tconst ; fields[2] = title ; fields[3] = maior
+                String[] fields = t.toString().split("\t");
+                total_movies += Long.parseLong(fields[0]);
+
+                int field_with_most_votes = Integer.parseInt(fields[3]);
+                if (field_with_most_votes >= most_votes) {
+                    tconst_most_votes = fields[1]; //filme com mais votos nas chaves que juntou (nao sao todas as entradas do ano, uma vez que o resto das entradas (continuacao)
+                    title_most_votes = fields[2];  //podem ter ido para outro combiner)
+                    most_votes = field_with_most_votes;
+                }
             }
 
+            record.put("year", key.toString());
+            record.put("number_of_movies", total_movies);
+            record.put("tconst_most_votes", tconst_most_votes);
+            record.put("title_most_votes", title_most_votes);
+            record.put("number_of_votes", most_votes);
             context.write(null, record);
         }
     }
