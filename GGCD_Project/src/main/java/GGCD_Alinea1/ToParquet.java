@@ -29,7 +29,7 @@ public class ToParquet {
 
     //Para saber o Schema a ser usado
     public static Schema getSchema() throws IOException {
-        InputStream is = new FileInputStream("schema.movies");
+        InputStream is = new FileInputStream("hdfs:///schema.movies");
         String ps = new String(is.readAllBytes());
         MessageType mt = MessageTypeParser.parseMessageType(ps);
         return new AvroSchemaConverter().convert(mt);
@@ -198,10 +198,10 @@ public class ToParquet {
 
         //input
         job1.setInputFormatClass(TextInputFormat.class);
-        MultipleInputs.addInputPath(job1,new Path("/home/bruno/Desktop/GGCD/Dados/original/title.basics.tsv.gz"),
+        MultipleInputs.addInputPath(job1,new Path("hdfs:///title.basics.tsv.gz"),
                 TextInputFormat.class, ToParquetMapperLeft.class);
 
-        MultipleInputs.addInputPath(job1,new Path("/home/bruno/Desktop/GGCD/Dados/original/title.ratings.tsv.gz"),
+        MultipleInputs.addInputPath(job1,new Path("hdfs:///title.ratings.tsv.gz"),
                 TextInputFormat.class, ToParquetMapperRight.class);
 
         job1.setReducerClass(JoinReducer.class);
@@ -211,7 +211,7 @@ public class ToParquet {
         job1.setOutputValueClass(GenericRecord.class);
         job1.setOutputFormatClass(AvroParquetOutputFormat.class);
         AvroParquetOutputFormat.setSchema(job1, getSchema());
-        FileOutputFormat.setOutputPath(job1,new Path("resultado_parquet"));
+        FileOutputFormat.setOutputPath(job1,new Path("hdfs:///resultado_parquet"));
 
         job1.setMapOutputKeyClass(Text.class);
         job1.setMapOutputValueClass(Text.class);

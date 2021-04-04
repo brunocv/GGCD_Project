@@ -155,10 +155,10 @@ public class ToFileStringAll {
 
         //input
         job1.setInputFormatClass(TextInputFormat.class);
-        MultipleInputs.addInputPath(job1,new Path("/home/bruno/Desktop/GGCD/Dados/original/title.basics.tsv.gz"),
+        MultipleInputs.addInputPath(job1,new Path("hdfs:///title.basics.tsv.gz"),
                 TextInputFormat.class, ToFileAllMapperLeft.class);
 
-        MultipleInputs.addInputPath(job1,new Path("/home/bruno/Desktop/GGCD/Dados/original/title.ratings.tsv.gz"),
+        MultipleInputs.addInputPath(job1,new Path("hdfs:///title.ratings.tsv.gz"),
                 TextInputFormat.class, ToFileAllMapperRight.class);
 
         job1.setReducerClass(JoinReducer.class);
@@ -166,7 +166,7 @@ public class ToFileStringAll {
         //output
         //Para guardar em ficheiro (texto)
         job1.setOutputFormatClass(TextOutputFormat.class);
-        TextOutputFormat.setOutputPath(job1,new Path("resultado_text_all"));
+        TextOutputFormat.setOutputPath(job1,new Path("hdfs:///resultado_text_all"));
         job1.setOutputKeyClass(Text.class);
         job1.setOutputValueClass(Text.class);
 

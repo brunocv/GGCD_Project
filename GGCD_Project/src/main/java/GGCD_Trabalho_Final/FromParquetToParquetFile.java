@@ -1,28 +1,15 @@
-package GGCD_Alinea2_Parquet;
+package GGCD_Trabalho_Final;
 
-import GGCD_Alinea3.CompositeKeyWritableA3;
-import GGCD_Alinea3.FromParquetToTextAlinea3;
-import GGCD_Alinea3.GroupingComparatorGenre;
-import net.minidev.json.writer.CollectionMapper;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.chain.ChainMapper;
-import org.apache.hadoop.mapreduce.lib.chain.ChainReducer;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.hadoop.util.Tool;
-import org.apache.hadoop.util.ToolRunner;
-import org.apache.hadoop.util.hash.Hash;
 import org.apache.parquet.avro.AvroParquetInputFormat;
 import org.apache.parquet.avro.AvroParquetOutputFormat;
 import org.apache.parquet.avro.AvroSchemaConverter;
@@ -32,7 +19,10 @@ import org.apache.parquet.schema.MessageTypeParser;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 
 //Class que vai pegar no ficheiro AvroParquet criado pela class AvroParquet e responder as queries

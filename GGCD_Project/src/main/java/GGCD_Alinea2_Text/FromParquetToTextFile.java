@@ -159,13 +159,13 @@ public class FromParquetToTextFile {
         job_query1.setOutputValueClass(LongWritable.class);
 
         job_query1.setInputFormatClass(AvroParquetInputFormat.class);
-        AvroParquetInputFormat.addInputPath(job_query1,new Path("resultado_parquet"));
+        AvroParquetInputFormat.addInputPath(job_query1,new Path("hdfs:///resultado_parquet"));
         Schema schema1;
-        schema1 = getSchemaQuery("schema.query1");
+        schema1 = getSchemaQuery("hdfs:///schema.query1");
         AvroParquetInputFormat.setRequestedProjection(job_query1, schema1);
 
         job_query1.setOutputFormatClass(TextOutputFormat.class);
-        TextOutputFormat.setOutputPath(job_query1,new Path("resultado_from_parquet_query1_text"));
+        TextOutputFormat.setOutputPath(job_query1,new Path("hdfs:///resultado_from_parquet_query1_text"));
 
         job_query1.waitForCompletion(true);
 
@@ -181,13 +181,13 @@ public class FromParquetToTextFile {
         job_query2.setOutputValueClass(Text.class);
 
         job_query2.setInputFormatClass(AvroParquetInputFormat.class);
-        AvroParquetInputFormat.addInputPath(job_query2,new Path("resultado_parquet"));
+        AvroParquetInputFormat.addInputPath(job_query2,new Path("hdfs:///resultado_parquet"));
         Schema schema2;
-        schema2 = getSchemaQuery("schema.query2");
+        schema2 = getSchemaQuery("hdfs:///schema.query2");
         AvroParquetInputFormat.setRequestedProjection(job_query2, schema2);
 
         job_query2.setOutputFormatClass(TextOutputFormat.class);
-        TextOutputFormat.setOutputPath(job_query2,new Path("resultado_from_parquet_query2_text"));
+        TextOutputFormat.setOutputPath(job_query2,new Path("hdfs:///resultado_from_parquet_query2_text"));
 
         job_query2.waitForCompletion(true);
 
@@ -209,13 +209,13 @@ public class FromParquetToTextFile {
         //job_query3.setNumReduceTasks(8);
 
         job_query3.setInputFormatClass(AvroParquetInputFormat.class);
-        AvroParquetInputFormat.addInputPath(job_query3,new Path("resultado_parquet"));
+        AvroParquetInputFormat.addInputPath(job_query3,new Path("hdfs:///resultado_parquet"));
         Schema schema3;
-        schema3 = getSchemaQuery("schema.query3");
+        schema3 = getSchemaQuery("hdfs:///schema.query3");
         AvroParquetInputFormat.setRequestedProjection(job_query3, schema3);
 
         job_query3.setOutputFormatClass(TextOutputFormat.class);
-        TextOutputFormat.setOutputPath(job_query3,new Path("resultado_from_parquet_query3_text"));
+        TextOutputFormat.setOutputPath(job_query3,new Path("hdfs:///resultado_from_parquet_query3_text"));
 
         job_query3.waitForCompletion(true);
 

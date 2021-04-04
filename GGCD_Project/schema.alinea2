@@ -8,3 +8,4 @@ message Alinea2 {
                 repeated binary str (STRING);
     }
 }
+

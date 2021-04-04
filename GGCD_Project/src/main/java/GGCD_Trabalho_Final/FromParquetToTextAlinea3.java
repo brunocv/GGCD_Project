@@ -1,4 +1,4 @@
-package GGCD_Alinea3;
+package GGCD_Trabalho_Final;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;

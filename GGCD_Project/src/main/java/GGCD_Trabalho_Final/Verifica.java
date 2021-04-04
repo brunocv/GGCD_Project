@@ -1,20 +1,12 @@
-package GGCD_Alinea2_Parquet;
+package GGCD_Trabalho_Final;
 
-import GGCD_Alinea2_Text.CompositeKeyWritable;
-import GGCD_Alinea2_Text.FromParquetToTextFile;
-import GGCD_Alinea2_Text.GroupingComparator;
-import GGCD_Alinea2_Text.PartitionerYear;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.parquet.avro.AvroParquetInputFormat;
 import org.apache.parquet.avro.AvroSchemaConverter;
@@ -25,9 +17,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Verifica {
     //Recebe o ficheiro do esquema e fica com o Schema

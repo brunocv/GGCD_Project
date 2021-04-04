@@ -5,5 +5,4 @@ message Queries {
     required binary startYear (STRING);
     required binary rating (STRING);
     required binary votes (STRING);
-
 }
