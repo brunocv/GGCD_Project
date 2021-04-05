@@ -8,6 +8,8 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -32,8 +34,14 @@ import java.util.Map;
 public class Verifica {
     //Recebe o ficheiro do esquema e fica com o Schema
     public static Schema getSchema(String schema) throws IOException {
-        InputStream is = new FileInputStream(schema);
-        String ps = new String(is.readAllBytes());
+
+        FileSystem fs = FileSystem.get(new Configuration());
+        FSDataInputStream s = fs.open(new Path(schema));
+        byte[] buf = new byte[10000];
+
+        s.read(buf);
+
+        String ps = new String(buf);
         MessageType mt = MessageTypeParser.parseMessageType(ps);
         return new AvroSchemaConverter().convert(mt);
     }

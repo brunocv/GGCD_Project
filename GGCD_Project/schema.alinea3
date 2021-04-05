@@ -1,10 +1,10 @@
 message Alinea3 {
-    required binary tconst (STRING);
-    required binary type (STRING);
-    required binary originalTitle (STRING);
-    required binary rating (STRING);
-    required binary votes (STRING);
-     required group genres (LIST) {
-                repeated binary str (STRING);
-        }
+    required binary tconst (UTF8);
+    required binary type (UTF8);
+    required binary originalTitle (UTF8);
+    required binary rating (UTF8);
+    required binary votes (UTF8);
+    required group genres (LIST) {
+        optional binary str (UTF8);
+    }
 }

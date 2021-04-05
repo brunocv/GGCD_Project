@@ -1,11 +1,11 @@
 message Alinea2 {
-    required binary year (STRING);
-    required binary number_of_movies (STRING);
-    required binary tconst_most_votes (STRING);
-    required binary title_most_votes (STRING);
-    required binary number_of_votes (STRING);
+    required binary year (UTF8);
+    required binary number_of_movies (UTF8);
+    required binary tconst_most_votes (UTF8);
+    required binary title_most_votes (UTF8);
+    required binary number_of_votes (UTF8);
     required group top10 (LIST) {
-                repeated binary str (STRING);
+        repeated binary str (UTF8);
     }
 }
 

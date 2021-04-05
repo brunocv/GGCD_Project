@@ -4,6 +4,8 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -27,10 +29,17 @@ import java.util.List;
 //Class que guarda toda a informacao, presente nos ficheiros, num unico ficheiro AvroParquet
 public class ToParquet {
 
+    //experimentar mandar o jar para la e executar
     //Para saber o Schema a ser usado
     public static Schema getSchema() throws IOException {
-        InputStream is = new FileInputStream("hdfs:///schema.movies");
-        String ps = new String(is.readAllBytes());
+
+        FileSystem fs = FileSystem.get(new Configuration());
+        FSDataInputStream s = fs.open(new Path("hdfs:///schema.movies"));
+        byte[] buf = new byte[10000];
+
+        s.read(buf);
+
+        String ps = new String(buf);
         MessageType mt = MessageTypeParser.parseMessageType(ps);
         return new AvroSchemaConverter().convert(mt);
     }
