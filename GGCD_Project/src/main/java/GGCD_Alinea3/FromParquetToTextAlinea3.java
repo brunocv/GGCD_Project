@@ -101,6 +101,43 @@ public class FromParquetToTextAlinea3 {
 
         HashMap<String,String> generos = new HashMap<>();
 
+        //funcao que vai carregar os dados da fase 1 com o top 2 rating para cada genero para memoria
+        @Override
+        protected void setup(Context context) throws IOException, InterruptedException {
+            URI[] mapsideFiles = context.getCacheFiles();
+            FileSystem fs = FileSystem.get(new Configuration());
+
+            BufferedReader reader;
+
+            for(URI u : mapsideFiles){
+
+                try {
+                    FSDataInputStream s = fs.open(new Path(u.getPath()));
+
+                    reader = new BufferedReader( new InputStreamReader(s));
+
+                    int i = 0;
+                    String line;
+                    int j = 0;
+                    String[] auxLine;
+                    while ((line = reader.readLine()) != null) {
+
+                        auxLine = line.split("\t");
+                        if(j==2) j = 0;
+                        generos.put(auxLine[0]+j,auxLine[1] + "\t" + auxLine[2] + "\t" +auxLine[3] + "\t" + auxLine[4]);
+                        j++;
+                        i++;
+
+                    }
+
+                    System.out.println("Numero de linhas de top 2 generos: " + i);
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
         @Override
         protected void map(Void key, GenericRecord value, Context context) throws IOException, InterruptedException {
 
@@ -168,40 +205,6 @@ public class FromParquetToTextAlinea3 {
 
         }
 
-        //funcao que vai carregar os dados da fase 1 com o top 2 rating para cada genero para memoria
-        @Override
-        protected void setup(Context context) throws IOException, InterruptedException {
-            URI[] mapsideFiles = context.getCacheFiles();
-            FileSystem fs = FileSystem.get(new Configuration());
-
-            BufferedReader reader;
-
-            for(URI u : mapsideFiles){
-
-                try {
-                    reader = new BufferedReader( new FileReader(u.toString()));
-
-                    int i = 0;
-                    String line;
-                    int j = 0;
-                    String[] auxLine;
-                    while ((line = reader.readLine()) != null) {
-
-                        auxLine = line.split("\t");
-                        if(j==2) j = 0;
-                        generos.put(auxLine[0]+j,auxLine[1] + "\t" + auxLine[2] + "\t" +auxLine[3] + "\t" + auxLine[4]);
-                        j++;
-                        i++;
-
-                    }
-
-                    System.out.println("Numero de linhas de top 2 generos: " + i);
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 
     //Reducer que so serve para escrever no ficheiro sem este ser dividido

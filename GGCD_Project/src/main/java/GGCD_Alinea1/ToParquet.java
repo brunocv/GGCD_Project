@@ -29,8 +29,7 @@ import java.util.List;
 //Class que guarda toda a informacao, presente nos ficheiros, num unico ficheiro AvroParquet
 public class ToParquet {
 
-    //experimentar mandar o jar para la e executar
-    //Para saber o Schema a ser usado
+    //getSchema
     public static Schema getSchema() throws IOException {
 
         FileSystem fs = FileSystem.get(new Configuration());
@@ -42,6 +41,7 @@ public class ToParquet {
         String ps = new String(buf);
         MessageType mt = MessageTypeParser.parseMessageType(ps);
         return new AvroSchemaConverter().convert(mt);
+
     }
 
     //Mapper que trata do ficheiro title.basics.tsv.gz

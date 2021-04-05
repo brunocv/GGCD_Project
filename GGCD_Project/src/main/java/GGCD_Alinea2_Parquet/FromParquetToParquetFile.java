@@ -38,12 +38,9 @@ import java.util.*;
 
 
 //Class que vai pegar no ficheiro AvroParquet criado pela class AvroParquet e responder as queries
-//Os resultados serao guardados em ficheiros de texto separado
-//Usado para verificacao de resultados
 public class FromParquetToParquetFile{
 
     public static List<String> top10 = new ArrayList<>();
-    public static List<String> sortedTop10 = new ArrayList<>();
 
     //Recebe o ficheiro do esquema e fica com o Schema
     public static Schema getSchema(String schema) throws IOException {
@@ -180,6 +177,7 @@ public class FromParquetToParquetFile{
 
             String ano = key.toString();
             int count = 0;
+
             for(String s : top10){
                 //ano rating votes tconst title
                 if(count == 10) break;

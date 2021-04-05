@@ -5,6 +5,6 @@ message Alinea3 {
     required binary rating (UTF8);
     required binary votes (UTF8);
     required group genres (LIST) {
-        optional binary str (UTF8);
+        repeated binary str (UTF8);
     }
 }

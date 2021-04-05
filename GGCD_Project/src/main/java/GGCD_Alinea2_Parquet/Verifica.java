@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Verifica {
+
     //Recebe o ficheiro do esquema e fica com o Schema
     public static Schema getSchema(String schema) throws IOException {
 
@@ -57,6 +58,7 @@ public class Verifica {
             String tconst_most_votes = value.get("tconst_most_votes").toString();
             String title_most_votes = value.get("title_most_votes").toString();
             String number_of_votes = value.get("number_of_votes").toString();
+
             List<String> top10 = new ArrayList<>();
             top10 = (List<String>)value.get("top10");
 
@@ -84,8 +86,6 @@ public class Verifica {
     //Main
     public static void main(String args[]) throws Exception{
 
-        // ########################## QUERY 1 #######################################
-
         Job job = Job.getInstance(new Configuration(),"FromParquetToTextFileQuery2Text");
 
         job.setJarByClass(Verifica.class);
@@ -103,6 +103,7 @@ public class Verifica {
         job.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(job,new Path("hdfs:///resultado_verifica"));
         job.waitForCompletion(true);
+
 
     }
 }

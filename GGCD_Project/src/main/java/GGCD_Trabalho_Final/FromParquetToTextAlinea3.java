@@ -1,5 +1,7 @@
 package GGCD_Trabalho_Final;
 
+import GGCD_Alinea3.CompositeKeyWritableA3;
+import GGCD_Alinea3.GroupingComparatorGenre;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
@@ -17,7 +19,9 @@ import org.apache.parquet.avro.AvroSchemaConverter;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.MessageTypeParser;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,7 +47,7 @@ public class FromParquetToTextAlinea3 {
     }
 
     //Mapper para resolver a alinea 3, a cada entrada retorna key = CompositeKeyWritable (esta tem secondary sort) e value = NullWritable
-    public static class FromParquetAlinea3Mapper extends Mapper<Void, GenericRecord, CompositeKeyWritableA3, NullWritable> {
+    public static class FromParquetAlinea3Mapper extends Mapper<Void, GenericRecord, GGCD_Alinea3.CompositeKeyWritableA3, NullWritable> {
 
         @Override
         protected void map(Void key, GenericRecord value, Context context) throws IOException, InterruptedException {
@@ -68,11 +72,11 @@ public class FromParquetToTextAlinea3 {
 
 
             if(!rating.equals("null") && !votes.equals("null")){
-                CompositeKeyWritableA3 newKey = new CompositeKeyWritableA3(tconst,originalTitle,rating,votes,genre);
+                GGCD_Alinea3.CompositeKeyWritableA3 newKey = new GGCD_Alinea3.CompositeKeyWritableA3(tconst,originalTitle,rating,votes,genre);
                 context.write(newKey, NullWritable.get());
             }
             else if(!rating.equals("null") && votes.equals("null")){
-                CompositeKeyWritableA3 newKey = new CompositeKeyWritableA3(tconst,originalTitle,rating,"-1",genre);
+                GGCD_Alinea3.CompositeKeyWritableA3 newKey = new GGCD_Alinea3.CompositeKeyWritableA3(tconst,originalTitle,rating,"-1",genre);
                 context.write(newKey, NullWritable.get());
             }
             else if(rating.equals("null")) return;
@@ -81,10 +85,10 @@ public class FromParquetToTextAlinea3 {
     }
 
     //Reducer para resolver a alinea 3, junta todas as keys com o mesmo genero e fica com o top 2 de rating para cada genero (quando entra no reduce ja vem ordenado)
-    public static class FromParquetAlinea3Reducer extends Reducer<CompositeKeyWritableA3,NullWritable, CompositeKeyWritableA3,NullWritable> {
+    public static class FromParquetAlinea3Reducer extends Reducer<GGCD_Alinea3.CompositeKeyWritableA3,NullWritable, GGCD_Alinea3.CompositeKeyWritableA3,NullWritable> {
 
         @Override
-        protected void reduce(CompositeKeyWritableA3 key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
+        protected void reduce(GGCD_Alinea3.CompositeKeyWritableA3 key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
 
             int i = 0;
             for (NullWritable value : values) {
@@ -100,6 +104,43 @@ public class FromParquetToTextAlinea3 {
     public static class FromParquetFinalMapper extends Mapper<Void, GenericRecord, Text,Text> {
 
         HashMap<String,String> generos = new HashMap<>();
+
+        //funcao que vai carregar os dados da fase 1 com o top 2 rating para cada genero para memoria
+        @Override
+        protected void setup(Context context) throws IOException, InterruptedException {
+            URI[] mapsideFiles = context.getCacheFiles();
+            FileSystem fs = FileSystem.get(new Configuration());
+
+            BufferedReader reader;
+
+            for(URI u : mapsideFiles){
+
+                try {
+                    FSDataInputStream s = fs.open(new Path(u.getPath()));
+
+                    reader = new BufferedReader( new InputStreamReader(s));
+
+                    int i = 0;
+                    String line;
+                    int j = 0;
+                    String[] auxLine;
+                    while ((line = reader.readLine()) != null) {
+
+                        auxLine = line.split("\t");
+                        if(j==2) j = 0;
+                        generos.put(auxLine[0]+j,auxLine[1] + "\t" + auxLine[2] + "\t" +auxLine[3] + "\t" + auxLine[4]);
+                        j++;
+                        i++;
+
+                    }
+
+                    System.out.println("Numero de linhas de top 2 generos: " + i);
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 
         @Override
         protected void map(Void key, GenericRecord value, Context context) throws IOException, InterruptedException {
@@ -168,40 +209,6 @@ public class FromParquetToTextAlinea3 {
 
         }
 
-        //funcao que vai carregar os dados da fase 1 com o top 2 rating para cada genero para memoria
-        @Override
-        protected void setup(Context context) throws IOException, InterruptedException {
-            URI[] mapsideFiles = context.getCacheFiles();
-            FileSystem fs = FileSystem.get(new Configuration());
-
-            BufferedReader reader;
-
-            for(URI u : mapsideFiles){
-
-                try {
-                    reader = new BufferedReader( new FileReader(u.toString()));
-
-                    int i = 0;
-                    String line;
-                    int j = 0;
-                    String[] auxLine;
-                    while ((line = reader.readLine()) != null) {
-
-                        auxLine = line.split("\t");
-                        if(j==2) j = 0;
-                        generos.put(auxLine[0]+j,auxLine[1] + "\t" + auxLine[2] + "\t" +auxLine[3] + "\t" + auxLine[4]);
-                        j++;
-                        i++;
-
-                    }
-
-                    System.out.println("Numero de linhas de top 2 generos: " + i);
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 
     //Reducer que so serve para escrever no ficheiro sem este ser dividido
@@ -228,7 +235,7 @@ public class FromParquetToTextAlinea3 {
         job_1.setJarByClass(FromParquetToTextAlinea3.class);
 
         job_1.setMapperClass(FromParquetAlinea3Mapper.class);
-        job_1.setMapOutputKeyClass(CompositeKeyWritableA3.class);
+        job_1.setMapOutputKeyClass(GGCD_Alinea3.CompositeKeyWritableA3.class);
         job_1.setMapOutputValueClass(NullWritable.class);
         //job_1.setPartitionerClass(PartitionerGenre.class); //dividir de forma correta por reducers (nao devemos precisar porque so usamsos 1 reducer)
         job_1.setGroupingComparatorClass(GroupingComparatorGenre.class); //agrupar por generos
