@@ -233,7 +233,6 @@ public class FromParquetToTextAlinea3 {
         job_1.setMapperClass(FromParquetAlinea3Mapper.class);
         job_1.setMapOutputKeyClass(CompositeKeyWritableA3.class);
         job_1.setMapOutputValueClass(NullWritable.class);
-        //job_1.setPartitionerClass(PartitionerGenre.class); //dividir de forma correta por reducers (nao devemos precisar porque so usamsos 1 reducer)
         job_1.setGroupingComparatorClass(GroupingComparatorGenre.class); //agrupar por generos
         job_1.setReducerClass(FromParquetAlinea3Reducer.class);
         job_1.setOutputKeyClass(CompositeKeyWritableA3.class);
