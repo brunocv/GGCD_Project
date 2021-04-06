@@ -87,6 +87,8 @@ public class Verifica {
     //Main
     public static void main(String args[]) throws Exception{
 
+        long startTime = System.nanoTime();
+
         Job job = Job.getInstance(new Configuration(),"FromParquetToTextFileQuery2Text");
 
         job.setJarByClass(Verifica.class);
@@ -105,6 +107,10 @@ public class Verifica {
         TextOutputFormat.setOutputPath(job,new Path("hdfs:///resultado_verifica"));
         job.waitForCompletion(true);
 
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime)/1000000; //miliseconds
+
+        System.out.println("\n\nTIME: " + duration +"\n");
 
     }
 }

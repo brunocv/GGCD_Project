@@ -83,19 +83,6 @@ public class FromParquetToParquetFile{
         }
     }
 
-    //Combiner para responder as queries
-    public static class FromParquetQueriesCombiner extends Reducer<Text,Text, Text,Text> {
-
-        @Override
-        protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-
-            for (Text value : values) {
-
-                context.write(key, value);
-            }
-        }
-    }
-
     //Reducer para responder as queries
     public static class FromParquetQueriesReducer extends Reducer<Text, Text, Void, GenericRecord> {
         private Schema schema;
@@ -189,7 +176,6 @@ public class FromParquetToParquetFile{
         job.setJarByClass(FromParquetToParquetFile.class);
 
         job.setMapperClass(FromParquetQueriesMapper.class);
-        job.setCombinerClass(FromParquetQueriesCombiner.class);
         job.setReducerClass(FromParquetQueriesReducer.class);
 
         job.setMapOutputKeyClass(Text.class);
