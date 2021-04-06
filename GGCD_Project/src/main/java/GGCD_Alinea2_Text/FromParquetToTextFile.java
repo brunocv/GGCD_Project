@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 
-//Class que vai pegar no ficheiro AvroParquet criado pela class AvroParquet e responder as queries
+//Class que vai pegar no ficheiro AvroParquet criado pela class ToParquet e responder as queries
 //Os resultados serao guardados em ficheiros de texto separado
 //Usado para verificacao de resultados
 public class FromParquetToTextFile {

@@ -30,6 +30,7 @@ import org.apache.parquet.avro.AvroParquetOutputFormat;
 import org.apache.parquet.avro.AvroSchemaConverter;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.MessageTypeParser;
+import org.checkerframework.checker.units.qual.C;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -37,10 +38,8 @@ import java.io.InputStream;
 import java.util.*;
 
 
-//Class que vai pegar no ficheiro AvroParquet criado pela class AvroParquet e responder as queries
+//Class que vai pegar no ficheiro AvroParquet criado pela class ToParquet e responder as queries
 public class FromParquetToParquetFile{
-
-    public static List<String> top10 = new ArrayList<>();
 
     //Recebe o ficheiro do esquema e fica com o Schema
     public static Schema getSchema(String schema) throws IOException {
@@ -86,40 +85,14 @@ public class FromParquetToParquetFile{
 
     //Combiner para responder as queries
     public static class FromParquetQueriesCombiner extends Reducer<Text,Text, Text,Text> {
+
         @Override
         protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 
-            long total = 0;
-            long maior = -1;
-            String tconst = "";
-            String title = "";
-
             for (Text value : values) {
 
-                total++; //numero de filmes
-                String[] fields = value.toString().split("\t");
-                top10.add(key.toString() + "\t" + fields[2] + "\t" + fields[3] + "\t" + fields[0] + "\t" + fields[1]);
-                int x = Integer.parseInt(fields[3]);
-
-                if (x >= maior) {
-                    tconst = fields[0]; //filme com mais votos nas chaves que juntou (nao sao todas as entradas do ano, uma vez que o resto das entradas (continuacao)
-                    title = fields[1];  //podem ter ido para outro combiner)
-                    maior = x;
-                }
+                context.write(key, value);
             }
-
-            StringBuilder result = new StringBuilder();
-            result.append(total);
-            result.append("\t");
-            result.append(tconst);
-            result.append("\t");
-            result.append(title);
-            result.append("\t");
-            result.append(maior);
-            //preciso mandar para o reducer assim a chave para ele juntar uma vez que o combiner nao junta as chaves todas iguais, so as que
-            //vem para ele e uma vez que do mapper podem vir varios splits cada combiner trata de um split e o reducer e que junta tudo
-            //combiner vai servir para tirar algum trabalho do reducer e assim algumas chaves ja estao juntas
-            context.write(key, new Text(result.toString()));
         }
     }
 
@@ -129,25 +102,7 @@ public class FromParquetToParquetFile{
 
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
-            Collections.sort(top10, new Comparator<String>() {
-                @Override
-                public int compare(String o1, String o2) {
-                    String[] aux = o1.split("\t");
-                    String[] aux2 = o2.split("\t");
 
-                    Double rating = Double.parseDouble(aux[1]);
-                    Double rating2 = Double.parseDouble(aux2[1]);
-
-                    int result = rating.compareTo(rating2);
-                    if(result == 0){
-                        Integer vote = Integer.parseInt(aux[2]);
-                        Integer vote2 = Integer.parseInt(aux2[2]);
-                        result = vote.compareTo(vote2);
-                    }
-                    return -result;
-                }
-            });
-            System.out.println(top10.size());
             schema = getSchema("hdfs:///schema.alinea2");
         }
 
@@ -156,36 +111,59 @@ public class FromParquetToParquetFile{
 
             long total_movies = 0;
             long most_votes = -1;
+            int field_with_most_votes = -1;
             String tconst_most_votes = "";
             String title_most_votes = "";
             GenericRecord record = new GenericData.Record(schema);
 
-            for(Text t : values){
-                //fields[0] = total ; fields[1] = tconst ; fields[2] = title ; fields[3] = maior
-                String[] fields = t.toString().split("\t");
-                total_movies += Long.parseLong(fields[0]);
+            List<String> top10Year = new ArrayList<>();
+            for(Text s : values){
+                top10Year.add(s.toString());
+                // s = tconst + \t + title + \t + rating + \t + votes
 
-                int field_with_most_votes = Integer.parseInt(fields[3]);
+                String[] fields = s.toString().split("\t");
+                total_movies++;
+
+                field_with_most_votes = Integer.parseInt(fields[3]);
                 if (field_with_most_votes >= most_votes) {
-                    tconst_most_votes = fields[1]; //filme com mais votos nas chaves que juntou (nao sao todas as entradas do ano, uma vez que o resto das entradas (continuacao)
-                    title_most_votes = fields[2];  //podem ter ido para outro combiner)
+                    tconst_most_votes = fields[0];
+                    title_most_votes = fields[1];
                     most_votes = field_with_most_votes;
                 }
             }
+
+            Collections.sort(top10Year, new Comparator<String>() {
+                @Override
+                public int compare(String o1, String o2) {
+                    String[] aux = o1.split("\t");
+                    String[] aux2 = o2.split("\t");
+
+                    Double rating = Double.parseDouble(aux[2]);
+                    Double rating2 = Double.parseDouble(aux2[2]);
+
+                    int result = rating.compareTo(rating2);
+                    if(result == 0){
+                        Integer vote = Integer.parseInt(aux[3]);
+                        Integer vote2 = Integer.parseInt(aux2[3]);
+                        result = vote.compareTo(vote2);
+                    }
+                    return -result;
+                }
+            });
 
             List<String> result = new ArrayList<>();
 
             String ano = key.toString();
             int count = 0;
 
-            for(String s : top10){
-                //ano rating votes tconst title
+            for(String s : top10Year){
+                //tconst title rating votes
                 if(count == 10) break;
 
                 String[] aux = s.split("\t");
 
-                if(aux[0].equals(ano) && !aux[1].equals("-1")){
-                    result.add(aux[3] + "\t" + aux[4] + "\t" + aux[1] + "\t" + aux[2]);
+                if(!aux[2].equals("-1")){
+                    result.add(aux[0] + "\t" + aux[1] + "\t" + aux[2] + "\t" + aux[3]);
                     count++;
                 }
             }
@@ -205,7 +183,8 @@ public class FromParquetToParquetFile{
 
         long startTime = System.nanoTime();
 
-        Job job = Job.getInstance(new Configuration(),"FromParquetToTextFileAlinea2");
+        Configuration conf = new Configuration();
+        Job job = Job.getInstance(conf,"FromParquetToTextFileAlinea2");
 
         job.setJarByClass(FromParquetToParquetFile.class);
 
@@ -232,7 +211,9 @@ public class FromParquetToParquetFile{
 
         long endTime = System.nanoTime();
         long duration = (endTime - startTime)/1000000; //miliseconds
+
         System.out.println("\n\nTIME: " + duration +"\n");
+
 
     }
 

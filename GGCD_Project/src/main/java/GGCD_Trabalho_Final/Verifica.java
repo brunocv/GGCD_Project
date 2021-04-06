@@ -15,12 +15,11 @@ import org.apache.parquet.avro.AvroSchemaConverter;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.MessageTypeParser;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+//Class que verifica o resultado de FromParquetToParquetFile
 public class Verifica {
 
     //Recebe o ficheiro do esquema e fica com o Schema
@@ -48,6 +47,7 @@ public class Verifica {
             String tconst_most_votes = value.get("tconst_most_votes").toString();
             String title_most_votes = value.get("title_most_votes").toString();
             String number_of_votes = value.get("number_of_votes").toString();
+
             List<String> top10 = new ArrayList<>();
             top10 = (List<String>)value.get("top10");
 
@@ -75,8 +75,6 @@ public class Verifica {
     //Main
     public static void main(String args[]) throws Exception{
 
-        // ########################## QUERY 1 #######################################
-
         Job job = Job.getInstance(new Configuration(),"FromParquetToTextFileQuery2Text");
 
         job.setJarByClass(Verifica.class);
@@ -94,6 +92,7 @@ public class Verifica {
         job.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(job,new Path("hdfs:///resultado_verifica"));
         job.waitForCompletion(true);
+
 
     }
 }

@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 
 
-//Class que vai pegar no ficheiro AvroParquet criado pela class AvroParquet e responder a alinea 3
+//Class que vai pegar no ficheiro AvroParquet criado pela class ToParquet e responder a alinea 3
 //Os resultados serao guardados em ficheiros de texto separado
 public class FromParquetToTextAlinea3 {
 

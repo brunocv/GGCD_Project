@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+//Class para verificar o resultado de FromParquetToParquetFile
 public class Verifica {
 
     //Recebe o ficheiro do esquema e fica com o Schema
